@@ -3,11 +3,16 @@
     "capabilities": [
         ""
     ],
-    "companyName": "Pebble Technology",
-    "longName": "My Simple Analog",
+    "companyName": "Max Sandholm",
+    "longName": "Hacklab Turku",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/hltpbl-nosignal.png",
+                "name": "IMG_HLTPBL_NOBT",
+                "type": "png"
+            },
             {
                 "file": "images/hltpbl.png",
                 "name": "IMG_HLTPBL",
@@ -16,12 +21,13 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "My Simple Analog",
+    "shortName": "Hacklab",
     "targetPlatforms": [
+        "aplite",
         "basalt"
     ],
-    "uuid": "ecc8f112-318f-4ee2-be11-53c63b8a1139",
-    "versionLabel": "1.0",
+    "uuid": "77a48a3f-222c-484f-9e1c-5b318cf871c7",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }

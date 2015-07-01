@@ -6,6 +6,7 @@ static Window *window;
 static Layer *s_hands_layer;
 
 static GBitmap *s_hlt_background_bitmap;
+static GBitmap *s_hlt_background_bitmap_nobt;
 static BitmapLayer *s_hlt_background_layer;
 
 static GPath *s_minute_arrow, *s_hour_arrow;
@@ -18,8 +19,14 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
   struct tm *t = localtime(&now);
 
   // minute/hour hand
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_context_set_stroke_color(ctx, GColorWhite);
+  #ifdef PBL_PLATFORM_APLITE
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+  #elif PBL_PLATFORM_BASALT
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_context_set_stroke_color(ctx, GColorWhite);
+  #endif
+
 
   gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
   gpath_draw_filled(ctx, s_minute_arrow);
@@ -38,14 +45,28 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
   layer_mark_dirty(window_get_root_layer(window));
 }
 
+static void bt_handler(bool connected) {
+  if (connected) {
+    bitmap_layer_set_bitmap(s_hlt_background_layer, s_hlt_background_bitmap);
+  } else {
+    bitmap_layer_set_bitmap(s_hlt_background_layer, s_hlt_background_bitmap_nobt);
+  }
+  layer_mark_dirty(bitmap_layer_get_layer(s_hlt_background_layer));
+}
+
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   window_set_background_color(window, GColorBlack);  
 
   s_hlt_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMG_HLTPBL);
+  s_hlt_background_bitmap_nobt = gbitmap_create_with_resource(RESOURCE_ID_IMG_HLTPBL_NOBT);
   s_hlt_background_layer = bitmap_layer_create(bounds);
-  bitmap_layer_set_bitmap(s_hlt_background_layer, s_hlt_background_bitmap);
+  if (bluetooth_connection_service_peek()) {
+    bitmap_layer_set_bitmap(s_hlt_background_layer, s_hlt_background_bitmap);
+  } else {
+    bitmap_layer_set_bitmap(s_hlt_background_layer, s_hlt_background_bitmap_nobt);
+  }
   #ifdef PBL_PLATFORM_APLITE
     bitmap_layer_set_compositing_mode(s_hlt_background_layer, GCompOpAssign);
   #elif PBL_PLATFORM_BASALT
@@ -83,6 +104,7 @@ static void init() {
   gpath_move_to(s_hour_arrow, center);
 
   tick_timer_service_subscribe(MINUTE_UNIT, handle_second_tick);
+  bluetooth_connection_service_subscribe(bt_handler);
 }
 
 static void deinit() {
@@ -91,6 +113,7 @@ static void deinit() {
   gbitmap_destroy(s_hlt_background_bitmap);
 
   tick_timer_service_unsubscribe();
+  bluetooth_connection_service_unsubscribe();
   window_destroy(window);
 }
 
